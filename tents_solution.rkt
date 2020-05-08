@@ -133,6 +133,13 @@
   )
 )
 
+(define (DECREMENT-ELEMENT-OF-LIST list pos index) 
+  (if (eq? pos index)
+    (cons (- (car list) 1) (cdr list))
+    (cons (car list) (DECREMENT-ELEMENT-OF-LIST (cdr list) (- pos 1) index))
+  )
+)
+
 (define (FILTER-LIST-WITH-ROW-INDEX predicate list treeList rowIndex)
   (if (null? list)
     '()
@@ -174,7 +181,7 @@
 (define (FILTER-GRID-IMPOSSIBLE-POINTS gridList treeList)
   (if (null? gridList)
     '()
-    (if (ISMEMBEROFLIST (NEIGHBOR-LIST (car gridList)) treeList)
+    (if (or (ISMEMBEROFLIST (NEIGHBOR-LIST (car gridList)) treeList) (LISTMEMBEROFLIST treeList (car gridList)))
       (cons (car gridList) (FILTER-GRID-IMPOSSIBLE-POINTS (cdr gridList) treeList))
       (FILTER-GRID-IMPOSSIBLE-POINTS (cdr gridList) treeList)
     )
