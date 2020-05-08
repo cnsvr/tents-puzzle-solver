@@ -93,15 +93,142 @@
   )
 )
 
-; TENTS SOLVER
-; row -> list cols -> list  trees -> list of list
-(define (TENTS-SOLUTION row cols trees)
-  
-
-
-
-
+(define (MEMBER list val)
+  (if (null? list)
+    #f
+    (if (eq? (car list) val)
+      #t
+      (or #f (MEMBER (cdr list) val))
+    )
+  )
 )
+
+
+(define (LISTMEMBEROFLIST list val)
+  (if (null? list)
+  #f
+  (if (and (eq? (car (car list)) (car val)) (eq? (cadr (car list)) (cadr val)))
+  #t
+  (or #f (LISTMEMBEROFLIST (cdr list) val))
+  ))  
+)
+
+(define (ISMEMBEROFLIST list otherList)
+  (if (null? list)
+    #f
+    (if (LISTMEMBEROFLIST otherList (car list))
+      #t
+      (or #f (ISMEMBEROFLIST (cdr list) otherList))
+    )
+  )
+)
+
+(define (FIND-POSITION val list index)
+  (if (null? list)
+  '()
+  (if (eq? (car list) val)
+  (cons index (FIND-POSITION val (cdr list) (+ 1 index)))
+  (FIND-POSITION val (cdr list) (+ 1 index))
+  )
+  )
+)
+
+(define (FILTER-LIST-WITH-ROW-INDEX predicate list treeList rowIndex)
+  (if (null? list)
+    '()
+    (if (or (not (predicate (car (car list)) rowIndex)) (LISTMEMBEROFLIST treeList (car list)))
+      (cons (car list) (FILTER-LIST-WITH-ROW-INDEX predicate (cdr list) treeList rowIndex))
+      (FILTER-LIST-WITH-ROW-INDEX predicate (cdr list) treeList rowIndex)
+    )
+  )
+)
+
+(define (FILTER-LIST-WITH-COL-INDEX predicate list treeList colIndex)
+  (if (null? list)
+    '()
+    (if (or (not (predicate (cadr (car list)) colIndex)) (LISTMEMBEROFLIST treeList (car list)))
+      (cons (car list) (FILTER-LIST-WITH-COL-INDEX predicate (cdr list) treeList colIndex))
+      (FILTER-LIST-WITH-COL-INDEX predicate (cdr list) treeList colIndex)
+    )
+  )
+)
+
+(define CHECKINDEX (lambda (val index)
+  (if (eq? val index)
+    #t 
+    #f
+  )
+))
+
+(define (FILTER-GRID-ROWS rowList colList gridList treeList)
+  (if (null? rowList)
+    (if (null? colList)
+      gridList
+      (FILTER-GRID-ROWS rowList (cdr colList) (FILTER-LIST-WITH-COL-INDEX CHECKINDEX gridList treeList (car colList)) treeList)
+
+    )
+    (FILTER-GRID-ROWS (cdr rowList) colList (FILTER-LIST-WITH-ROW-INDEX CHECKINDEX gridList treeList (car rowList)) treeList)
+  )
+)
+
+(define (FILTER-GRID-IMPOSSIBLE-POINTS gridList treeList)
+  (if (null? gridList)
+    '()
+    (if (ISMEMBEROFLIST (NEIGHBOR-LIST (car gridList)) treeList)
+      (cons (car gridList) (FILTER-GRID-IMPOSSIBLE-POINTS (cdr gridList) treeList))
+      (FILTER-GRID-IMPOSSIBLE-POINTS (cdr gridList) treeList)
+    )
+  )
+)
+
+(define ZERO-INDEX (lambda (rowList) (if (MEMBER rowList 0) (FIND-POSITION 0 rowList 1) #f)) )
+
+
+
+
+
+(define (CREATE-ROW row col initial)
+  (if (eq? col initial)
+    (cons (cons row (cons initial '())) '())
+    (cons (cons row (cons initial '())) (CREATE-ROW row col (+ 1 initial)))
+  )
+)
+
+
+(define (FULL-GRID row col initial) 
+  (if (eq? row initial)
+    (append (CREATE-ROW row col 1) '())
+    (append (FULL-GRID (- row 1) col initial) (CREATE-ROW row col 1) )
+  )
+)
+
+
+(define gridList (FULL-GRID 8 8 1))
+
+(define treeList '( (1 3) (1 6) (2 4) (2 8) (3 2) (3 5) (4 3) (4 6) (5 7) (6 4) (7 1) (8 3) ) ) 
+
+(define rowList '(2 1 3 1 3 1 1 0))
+
+(define colList '(1 2 1 3 0 2 1 2))
+
+(define rowZeroList (ZERO-INDEX rowList))
+
+(define colZeroList (ZERO-INDEX colList))
+
+
+(define filterGrid (FILTER-GRID-ROWS rowZeroList colZeroList gridList treeList))
+;filterGrid
+(FILTER-GRID-IMPOSSIBLE-POINTS filterGrid treeList)
+
+
+
+
+;gridList
+
+
+
+
+
 
 
 
