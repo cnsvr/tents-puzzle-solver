@@ -38,19 +38,19 @@
 ;The function can return the neighbors in any order. 
 ;Even if a position is out of bounds in the context of the tents puzzle this function must put that position in the list that this function returns.
 
-(define (NEIGHBOR-LIST list)
+(define (NEIGHBOR-LIST point)
   (cons   
   ; LEFT
-  (cons (- (car list) 1) (cons (cadr list) '()))     
+  (cons (- (car point) 1) (cons (cadr point) '()))     
   (cons
   ; RIGHT 
-  (cons (+ (car list) 1) (cons (cadr list) '()))  
+  (cons (+ (car point) 1) (cons (cadr point) '()))  
   (cons
   ; UP
-  (cons (car list) (cons (- (cadr list) 1) '()))   
+  (cons (car point) (cons (- (cadr point) 1) '()))   
   (cons
   ; DOWN
-  (cons (car list) (cons (+ (cadr list) 1) '())) '()))))
+  (cons (car point) (cons (+ (cadr point) 1) '())) '()))))
 )
 
 ;This function takes 2 parameters. 
@@ -123,6 +123,17 @@
   )
 )
 
+(define (FILTER-NEIGHBOR neigbourList list)
+  (if (null? neigbourList)
+    '()
+    (if (LISTMEMBEROFLIST list (car neigbourList))
+      (cons (car neigbourList) (FILTER-NEIGHBOR (cdr neigbourList) list))
+      (FILTER-NEIGHBOR (cdr neigbourList) list)
+    )
+
+  )
+)
+
 (define (FIND-POSITION val list index)
   (if (null? list)
   '()
@@ -132,6 +143,12 @@
   )
   )
 )
+
+;(define (HORIZONTAL-NEIGHBOR-CHECK parameters))
+
+;(define (VERTICAL-NEIGHBOR-CHECK parameters))
+
+
 
 (define (DECREMENT-ELEMENT-OF-LIST list pos index) 
   (if (eq? pos index)
@@ -167,14 +184,14 @@
   )
 ))
 
-(define (FILTER-GRID-ROWS rowList colList gridList treeList)
+(define (FILTER-GRID-ZEROS rowList colList gridList treeList)
   (if (null? rowList)
     (if (null? colList)
       gridList
-      (FILTER-GRID-ROWS rowList (cdr colList) (FILTER-LIST-WITH-COL-INDEX CHECKINDEX gridList treeList (car colList)) treeList)
+      (FILTER-GRID-ZEROS  rowList (cdr colList) (FILTER-LIST-WITH-COL-INDEX CHECKINDEX gridList treeList (car colList)) treeList)
 
     )
-    (FILTER-GRID-ROWS (cdr rowList) colList (FILTER-LIST-WITH-ROW-INDEX CHECKINDEX gridList treeList (car rowList)) treeList)
+    (FILTER-GRID-ZEROS  (cdr rowList) colList (FILTER-LIST-WITH-ROW-INDEX CHECKINDEX gridList treeList (car rowList)) treeList)
   )
 )
 
@@ -188,7 +205,38 @@
   )
 )
 
+(define (COMPARE-POINTS point1 point2)
+  (if (and (eq? (car point1) (car point2)) (eq? (cadr point1) (cadr point2)))
+    #t
+    #f
+  )
+)
+
+(define (REMOVE-POINT point list)
+  (if (null? point)
+    list
+    (if (COMPARE-POINTS point (car list))
+      (append (cdr list) '())
+      (cons (car list) (REMOVE-POINT point (cdr list)) )
+  
+    )
+  )
+)
+
 (define ZERO-INDEX (lambda (rowList) (if (MEMBER rowList 0) (FIND-POSITION 0 rowList 1) #f)) )
+
+(define (RETURN-POINT-IF-ANY-TREE-HAS-ONE-POSSIBILITY treeList gridList)
+ 
+  (define filteredList (FILTER-NEIGHBOR (NEIGHBOR-LIST (car treeList)) gridList))
+  (if (null? treeList)
+    '()
+    (if (eq? (length filteredList) 1)
+      (FILTER-NEIGHBOR (NEIGHBOR-LIST (car treeList)) gridList)
+      (RETURN-POINT-IF-ANY-TREE-HAS-ONE-POSSIBILITY (cdr treeList) gridList)
+    )
+  )
+)
+
 
 
 
@@ -209,29 +257,28 @@
   )
 )
 
-
-(define gridList (FULL-GRID 8 8 1))
-
-(define treeList '( (1 3) (1 6) (2 4) (2 8) (3 2) (3 5) (4 3) (4 6) (5 7) (6 4) (7 1) (8 3) ) ) 
-
-(define rowList '(2 1 3 1 3 1 1 0))
-
-(define colList '(1 2 1 3 0 2 1 2))
+(define (TENTS-SOLUTION list)
+  (define rowList (car list))
+  (define colList (cadr list))
+  (define treeList (caddr list))
+  
+(define gridList (FULL-GRID (length rowList) (length colList) 1))
 
 (define rowZeroList (ZERO-INDEX rowList))
 
 (define colZeroList (ZERO-INDEX colList))
 
 
-(define filterGrid (FILTER-GRID-ROWS rowZeroList colZeroList gridList treeList))
+(define filterGrid (FILTER-GRID-ZEROS rowZeroList colZeroList gridList treeList))
 ;filterGrid
-'(empty cells) (FILTER-GRID-IMPOSSIBLE-POINTS filterGrid treeList)
-'(tree cells) treeList
+(display (FILTER-GRID-IMPOSSIBLE-POINTS filterGrid treeList))
+(display "\n")
+(display treeList)
+(display "\n")
 
-; IS IT OKEY?
+)
 
-
-;gridList
+(TENTS-SOLUTION '( (2 1 3 1 3 1 1 0) (1 2 1 3 0 2 1 2) ( (1 3) (1 6) (2 4) (2 8) (3 2) (3 5) (4 3) (4 6) (5 7) (6 4) (7 1) (8 3) ) ))
 
 
 
