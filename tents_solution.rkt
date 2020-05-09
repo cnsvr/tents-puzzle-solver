@@ -181,7 +181,7 @@
 (define (FILTER-GRID-IMPOSSIBLE-POINTS gridList treeList)
   (if (null? gridList)
     '()
-    (if (or (ISMEMBEROFLIST (NEIGHBOR-LIST (car gridList)) treeList) (LISTMEMBEROFLIST treeList (car gridList)))
+    (if (ISMEMBEROFLIST (NEIGHBOR-LIST (car gridList)) treeList)
       (cons (car gridList) (FILTER-GRID-IMPOSSIBLE-POINTS (cdr gridList) treeList))
       (FILTER-GRID-IMPOSSIBLE-POINTS (cdr gridList) treeList)
     )
@@ -225,9 +225,10 @@
 
 (define filterGrid (FILTER-GRID-ROWS rowZeroList colZeroList gridList treeList))
 ;filterGrid
-(FILTER-GRID-IMPOSSIBLE-POINTS filterGrid treeList)
+'(empty cells) (FILTER-GRID-IMPOSSIBLE-POINTS filterGrid treeList)
+'(tree cells) treeList
 
-
+; IS IT OKEY?
 
 
 ;gridList
