@@ -40,17 +40,17 @@
 
 (define (NEIGHBOR-LIST point)
   (cons   
-  ; LEFT
+  ; UP
   (cons (- (car point) 1) (cons (cadr point) '()))     
   (cons
-  ; RIGHT 
-  (cons (+ (car point) 1) (cons (cadr point) '()))  
+  ; LEFT 
+  (cons (car point) (cons (- (cadr point) 1) '()))  
   (cons
-  ; UP
-  (cons (car point) (cons (- (cadr point) 1) '()))   
+  ; RIGHT
+  (cons (car point) (cons (+ (cadr point) 1)  '()))   
   (cons
   ; DOWN
-  (cons (car point) (cons (+ (cadr point) 1) '())) '()))))
+  (cons (+ (car point) 1) (cons (cadr point) '())) '()))))
 )
 
 ;This function takes 2 parameters. 
@@ -93,12 +93,12 @@
   )
 )
 
-(define (MEMBER list val)
+(define (MEM list val)
   (if (null? list)
     #f
     (if (eq? (car list) val)
       #t
-      (or #f (MEMBER (cdr list) val))
+      (or #f (MEM (cdr list) val))
     )
   )
 )
@@ -149,11 +149,14 @@
 ;(define (VERTICAL-NEIGHBOR-CHECK parameters))
 
 
+(define (DECREMENT-ELEMENTS-OF-LIST list listPos index)
+  (if (null? listPos)
+    list
+    (if (eq? (car listPos) index)
+      (cons (- (car list) 1) (DECREMENT-ELEMENTS-OF-LIST (cdr list) (cdr listPos) (+ 1 index)))
+      (cons (car list) (DECREMENT-ELEMENTS-OF-LIST (cdr list) listPos (+ 1 index)))
+    )
 
-(define (DECREMENT-ELEMENT-OF-LIST list pos index) 
-  (if (eq? pos index)
-    (cons (- (car list) 1) (cdr list))
-    (cons (car list) (DECREMENT-ELEMENT-OF-LIST (cdr list) (- pos 1) index))
   )
 )
 
@@ -212,30 +215,36 @@
   )
 )
 
-(define (REMOVE-POINT point list)
-  (if (null? point)
+
+(define (REMOVE-POINTS pointList list)
+  (if (or (null? pointList) (null? list))
     list
-    (if (COMPARE-POINTS point (car list))
-      (append (cdr list) '())
-      (cons (car list) (REMOVE-POINT point (cdr list)) )
-  
+    (if (COMPARE-POINTS (car pointList) (car list))
+      (append (REMOVE-POINTS (cdr pointList) (cdr list)) '())
+      (cons (car list) (REMOVE-POINTS pointList (cdr list)))
     )
   )
 )
 
-(define ZERO-INDEX (lambda (rowList) (if (MEMBER rowList 0) (FIND-POSITION 0 rowList 1) #f)) )
+
+
+
+(define ZERO-INDEX (lambda (rowList) (if (MEM rowList 0) (FIND-POSITION 0 rowList 1) '())) )
 
 (define (RETURN-POINT-IF-ANY-TREE-HAS-ONE-POSSIBILITY treeList gridList)
- 
-  (define filteredList (FILTER-NEIGHBOR (NEIGHBOR-LIST (car treeList)) gridList))
   (if (null? treeList)
     '()
-    (if (eq? (length filteredList) 1)
-      (FILTER-NEIGHBOR (NEIGHBOR-LIST (car treeList)) gridList)
+    (if (eq? (length (FILTER-NEIGHBOR (NEIGHBOR-LIST (car treeList)) gridList)) 1)
+      (append (FILTER-NEIGHBOR (NEIGHBOR-LIST (car treeList)) gridList) (cons (car treeList) '()))
       (RETURN-POINT-IF-ANY-TREE-HAS-ONE-POSSIBILITY (cdr treeList) gridList)
     )
   )
 )
+
+
+
+
+
 
 
 
@@ -257,28 +266,72 @@
   )
 )
 
+(define (SOLUTION rowList colList treeList gridList returnList)
+
+  ; SOLUTION LOOP
+  ; (if (length treeList) 0)
+      ;returnList
+      ;CALL SOLUTION AGAIN WTIH NEW LISTS
+
+     
+  (define rowZeroList (ZERO-INDEX rowList))
+  (define colZeroList (ZERO-INDEX colList))
+
+
+  (define filterGrid (FILTER-GRID-ZEROS rowZeroList colZeroList gridList treeList))
+
+; CHANGE 0 values as - 1 at rowList and oloumnList
+
+  (define filteredRowList (DECREMENT-ELEMENTS-OF-LIST rowList rowZeroList 1))
+  (define filteredColList (DECREMENT-ELEMENTS-OF-LIST colList colZeroList 1))
+  ;(display filteredRowList)
+  ;(display filteredColList)
+
+
+
+  ;filterGrid
+  (define impossibleGrid (FILTER-GRID-IMPOSSIBLE-POINTS filterGrid treeList))
+  ;(display "\n")
+  ;(display treeList)
+  ;(display "\n")
+  (define oneOptionForTree (RETURN-POINT-IF-ANY-TREE-HAS-ONE-POSSIBILITY treeList filterGrid))
+  
+  (define newGridList (if (not (null? oneOptionForTree)) (REMOVE-POINTS (NEIGHBOR-LIST (car oneOptionForTree)) impossibleGrid) impossibleGrid))
+  (define newTreeList (if (not (null? oneOptionForTree)) (REMOVE-POINTS (cons (cadr oneOptionForTree) '()) treeList) treeList))
+    
+  (define newRowList (if (not (null? oneOptionForTree)) (DECREMENT-ELEMENTS-OF-LIST filteredRowList (cons (car (car oneOptionForTree)) '()) 1) filteredRowList))
+  (define newColList (if (not (null? oneOptionForTree)) (DECREMENT-ELEMENTS-OF-LIST filteredColList (cons (cadr (car oneOptionForTree)) '()) 1) filteredColList))
+  (define tentList   (if (not (null? oneOptionForTree)) (cons (car oneOptionForTree) returnList) returnList))
+
+
+  ;(display newTreeList)
+  ;(display newGridList)
+  ;(display "\n")
+  ;(display newTreeList)
+  ;(display "\n")
+  ;(display newRowList)
+  ;(display "\n")
+  ;(display newColList)
+
+  ;; NO SOLUTION PROBLEM??????????????????????
+  (if (eq? (length newTreeList) 0)
+    tentList
+    (SOLUTION newRowList newColList newTreeList newGridList tentList)
+  )
+
+
+)
+
 (define (TENTS-SOLUTION list)
   (define rowList (car list))
   (define colList (cadr list))
   (define treeList (caddr list))
   
-(define gridList (FULL-GRID (length rowList) (length colList) 1))
-
-(define rowZeroList (ZERO-INDEX rowList))
-
-(define colZeroList (ZERO-INDEX colList))
-
-
-(define filterGrid (FILTER-GRID-ZEROS rowZeroList colZeroList gridList treeList))
-;filterGrid
-(display (FILTER-GRID-IMPOSSIBLE-POINTS filterGrid treeList))
-(display "\n")
-(display treeList)
-(display "\n")
-
+  (define gridList (FULL-GRID (length rowList) (length colList) 1))
+  (SOLUTION rowList colList treeList gridList '())
 )
 
-(TENTS-SOLUTION '( (2 1 3 1 3 1 1 0) (1 2 1 3 0 2 1 2) ( (1 3) (1 6) (2 4) (2 8) (3 2) (3 5) (4 3) (4 6) (5 7) (6 4) (7 1) (8 3) ) ))
+(TENTS-SOLUTION '((2 1 2 1 2 1 2) (1 2 1 1 2 0 4) ((1 4) (2 7) (3 1) (3 5) (3 6) (4 1) (4 7) (5 5) (6 2) (6 3) (7 6))))
 
 
 
