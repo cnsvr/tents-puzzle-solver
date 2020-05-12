@@ -1,2 +1,2 @@
 ## TENTS PUZZLE SOLVER 
-[x] Some implementation is done.
+- [x] Some implementation is done.
