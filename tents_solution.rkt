@@ -86,12 +86,39 @@
 ;A point of grid and size of puzzle (NxN)
 ;It returns true if given point is in bound of puzzle, otherwise false.
 
-(define (IS-IN-BOUND point SIZE ) 
-  (if (and (and (>= (car point) 1) (<= (car point) SIZE)) (and (>= (cadr point) 1) (<= (cadr point) SIZE)))
-  #t
-  #f
+
+
+(define (MEM list val)
+  (if (null? list)
+    #f
+    (if (eq? (car list) val)
+      #t
+      (or #f (MEM (cdr list) val))
+    )
   )
 )
+
+
+(define (LISTMEMBEROFLIST list val)
+  (if (null? list)
+      #f
+      (if (and (eq? (car (car list)) (car val)) (eq? (cadr (car list)) (cadr val)))
+          #t
+          (LISTMEMBEROFLIST (cdr list) val)
+      )
+  )  
+)
+
+(define (ISMEMBEROFLIST list otherList)
+  (if (null? list)
+    #f
+    (if (LISTMEMBEROFLIST otherList (car list))
+      #t
+      (or #f (ISMEMBEROFLIST (cdr list) otherList))
+    )
+  )
+)
+
 (define (ALL-NEIGHBOR point)
 
   (cons
@@ -121,47 +148,6 @@
 )
 
 
-(define (MEM list val)
-  (if (null? list)
-    #f
-    (if (eq? (car list) val)
-      #t
-      (or #f (MEM (cdr list) val))
-    )
-  )
-)
-
-
-(define (LISTMEMBEROFLIST list val)
-  (if (null? list)
-  #f
-  (if (and (eq? (car (car list)) (car val)) (eq? (cadr (car list)) (cadr val)))
-  #t
-  (or #f (LISTMEMBEROFLIST (cdr list) val))
-  ))  
-)
-
-(define (ISMEMBEROFLIST list otherList)
-  (if (null? list)
-    #f
-    (if (LISTMEMBEROFLIST otherList (car list))
-      #t
-      (or #f (ISMEMBEROFLIST (cdr list) otherList))
-    )
-  )
-)
-
-(define (FILTER-NEIGHBOR neigbourList list)
-  (if (null? neigbourList)
-    '()
-    (if (LISTMEMBEROFLIST list (car neigbourList))
-      (cons (car neigbourList) (FILTER-NEIGHBOR (cdr neigbourList) list))
-      (FILTER-NEIGHBOR (cdr neigbourList) list)
-    )
-
-  )
-)
-
 (define (FIND-POSITION val list index)
   (if (null? list)
   '()
@@ -171,34 +157,32 @@
   )
   )
 )
-
-;(define (HORIZONTAL-NEIGHBOR-CHECK parameters))
-
-;(define (VERTICAL-NEIGHBOR-CHECK parameters))
-
-(define (POSITION-FOR-COL-TENTS positionForTents)
-  (if (null? positionForTents)
+(define (FIND-VALUE list index)
+  (if (null? list)
     '()
-    (cons (cadr (car (car positionForTents))) (append (POSITION-FOR-COL-TENTS (cdr positionForTents)) '()))
-  )
-)
-
-(define (POSITION-FOR-ROW-TENTS positionForTents)
-  (if (null? positionForTents)
-    '()
-    (cons (car (car (car positionForTents))) (append (POSITION-FOR-ROW-TENTS (cdr positionForTents)) '()))
-  )
-)
-
-
-(define (DECREMENT-ELEMENTS-OF-LIST list listPos index)
-  (if (null? listPos)
-    list
-    (if (eq? (car listPos) index)
-      (cons (- (car list) 1) (DECREMENT-ELEMENTS-OF-LIST (cdr list) (cdr listPos) (+ 1 index)))
-      (cons (car list) (DECREMENT-ELEMENTS-OF-LIST (cdr list) listPos (+ 1 index)))
+    (if (eq? index 1)
+      (car list)
+      (FIND-VALUE (cdr list) (- index 1))
     )
+  )
+)
 
+(define (POSSIBLE-NEIGHBOR treeNeighbors gridList)
+  (if (null? treeNeighbors )
+      '()
+      (if (LISTMEMBEROFLIST gridList (car treeNeighbors))
+          (cons (car treeNeighbors) (POSSIBLE-NEIGHBOR (cdr treeNeighbors) gridList))
+          (POSSIBLE-NEIGHBOR (cdr treeNeighbors) gridList)
+      )
+           
+      
+  )
+)
+
+(define (DECREMENT-ELEMENT-OF-LIST list pos)
+  (if (eq? pos 1)
+    (cons (- (car list) 1) (cdr list))
+    (cons (car list) (DECREMENT-ELEMENT-OF-LIST (cdr list) (- pos 1)))
   )
 )
 
@@ -222,6 +206,8 @@
   )
 )
 
+
+
 (define CHECKINDEX (lambda (val index)
   (if (eq? val index)
     #t 
@@ -240,23 +226,35 @@
   )
 )
 
+(define (FILTER-ZERO-COL colIndex gridList)
+  (if (null? gridList)
+    '()
+    (if (eq? (cadr (car gridList)) colIndex)
+      (FILTER-ZERO-COL colIndex (cdr gridList))
+      (cons (car gridList) (FILTER-ZERO-COL colIndex (cdr gridList)) )
+    )  
+  )
+)
+
+(define (FILTER-ZERO-ROW rowIndex gridList)
+  (if (null? gridList)
+    '()
+    (if (eq? (car (car gridList)) rowIndex)
+      (FILTER-ZERO-ROW rowIndex (cdr gridList))
+      (cons (car gridList) (FILTER-ZERO-ROW rowIndex (cdr gridList)) )
+    )  
+  )
+)
+
 (define (FILTER-GRID-IMPOSSIBLE-POINTS gridList treeList)
   (if (null? gridList)
     '()
-    (if (ISMEMBEROFLIST (NEIGHBOR-LIST (car gridList)) treeList)
+    (if (and (ISMEMBEROFLIST (NEIGHBOR-LIST (car gridList)) treeList)  (not (LISTMEMBEROFLIST treeList (car gridList))))
       (cons (car gridList) (FILTER-GRID-IMPOSSIBLE-POINTS (cdr gridList) treeList))
       (FILTER-GRID-IMPOSSIBLE-POINTS (cdr gridList) treeList)
     )
   )
 )
-
-(define (COMPARE-POINTS point1 point2)
-  (if (and (eq? (car point1) (car point2)) (eq? (cadr point1) (cadr point2)))
-    #t
-    #f
-  )
-)
-
 
 
 (define (REMOVE-POINTS pointList list)
@@ -269,126 +267,39 @@
   )
 )
 
-(define (COL-NUMBER-MATCH list colPos index)
-  (if (null? list)
-    index
-    (if (eq? (cadr (car list)) colPos)
-      (COL-NUMBER-MATCH (cdr list) colPos (+ index 1))
-      (COL-NUMBER-MATCH (cdr list) colPos index)
-    )
-  )
-)
-
-(define (ROW-NUMBER-MATCH list rowPos index)
-  (if (null? list)
-    index
-    (if (eq? (car (car list)) rowPos)
-      (ROW-NUMBER-MATCH (cdr list) rowPos (+ index 1))
-      (ROW-NUMBER-MATCH (cdr list) rowPos index)
-    )
-  )
-)
-
-(define (RETURN-POINT-IF-COL-MATCH colList gridList index)
-  (if (null? colList)
-    '()
-    (if (eq? (car colList) (COL-NUMBER-MATCH gridList index 0) )
-      index
-      (RETURN-POINT-IF-COL-MATCH (cdr colList) gridList (+ 1 index))
-    )
-  )  
-)
-(define (RETURN-POINT-IF-ROW-MATCH rowList gridList index)
-  (if (null? rowList)
-    '()
-    (if (eq? (car rowList) (ROW-NUMBER-MATCH gridList index 0) )
-      index
-      (RETURN-POINT-IF-ROW-MATCH (cdr rowList) gridList (+ 1 index))
-    )
-  )  
-)
-
-(define (RETURN-FIRST-POSSIBLE-TREE-OPTION-FOR-TENTS possibleList treeList)
-  (if (null? possibleList)
-    '()
-    (if (LISTMEMBEROFLIST treeList (car possibleList))
-      (car possibleList)
-      (RETURN-FIRST-POSSIBLE-TREE-OPTION-FOR-TENTS (cdr possibleList) treeList)
-    )
-
-  )
-)
-
-
-(define (FIND-TENTS-AND-TREE-POINTS-WITH-ROW-INDEX treeList gridList rowIndex)
-  (if (null? gridList)
-    '()
-    (if (eq? (car (car gridList)) rowIndex)
-      (append (cons (cons (car gridList) (cons (RETURN-FIRST-POSSIBLE-TREE-OPTION-FOR-TENTS (NEIGHBOR-LIST (car gridList)) treeList) '())) '()) (FIND-TENTS-AND-TREE-POINTS-WITH-ROW-INDEX treeList (cdr gridList) rowIndex))
-      (FIND-TENTS-AND-TREE-POINTS-WITH-ROW-INDEX treeList (cdr gridList) rowIndex)
-    )
-  )
-)
-
-
-(define (FIND-TENTS-AND-TREE-POINTS-WITH-COL-INDEX treeList gridList colIndex)
-  (if (null? gridList)
-    '()
-    (if (eq? (cadr (car gridList)) colIndex)
-      (append (cons (cons (car gridList) (cons (RETURN-FIRST-POSSIBLE-TREE-OPTION-FOR-TENTS (NEIGHBOR-LIST (car gridList)) treeList) '())) '()) (FIND-TENTS-AND-TREE-POINTS-WITH-COL-INDEX treeList (cdr gridList) colIndex))
-      (FIND-TENTS-AND-TREE-POINTS-WITH-COL-INDEX treeList (cdr gridList) colIndex)
-    )
-  )
-)
-
-(define (REMOVE-POINTS-IF-HAS-EQUALITY list gridList)
-  (if (null? list)
-    gridList
-    (REMOVE-POINTS-IF-HAS-EQUALITY (cdr list) (REMOVE-POINTS (cons (car (car list)) (ALL-NEIGHBOR (car (car list)))) gridList))
-  )
-)
-
-(define (REMOVE-TREES-IF-HAS-EQUALITY list treeList)
-  (if (null? list)
-    treeList
-    (REMOVE-TREES-IF-HAS-EQUALITY (cdr list) (REMOVE-POINTS (cons (cadr (car list)) '()) treeList))
-  )
-)
-
-
-
-(define (ADD-TENTS-TO-LIST positionForTents tentList)
-  (if (null? positionForTents)
-    tentList
-    (ADD-TENTS-TO-LIST (cdr positionForTents) (cons (car (car positionForTents)) tentList))
-  )
-)
-
-
-
-
-
-
 (define ZERO-INDEX (lambda (rowList) (if (MEM rowList 0) (FIND-POSITION 0 rowList 1) '())) )
 
-(define (RETURN-POINT-IF-ANY-TREE-HAS-ONE-POSSIBILITY treeList gridList)
-  (if (null? treeList)
-    '()                        ;ALL NEIGBHOR OLMASI LAZIM AMA HATA VERIYOR
-    (if (eq? (length (FILTER-NEIGHBOR (NEIGHBOR-LIST (car treeList)) gridList)) 1)
-      (append (FILTER-NEIGHBOR (NEIGHBOR-LIST (car treeList)) gridList) (cons (car treeList) '()))
-      (RETURN-POINT-IF-ANY-TREE-HAS-ONE-POSSIBILITY (cdr treeList) gridList)
+
+(define (ROWALLZERO rowList)
+  (if (null? rowList)
+    #t
+    (if (not (eq? (car rowList) 0))
+      #f
+      (ROWALLZERO (cdr rowList))
     )
   )
 )
 
+(define (COLALLZERO colList)
+  (if (null? colList)
+    #t
+    (if (not (eq? (car colList) 0))
+      #f
+      (COLALLZERO (cdr colList))
+    )
+  )
+)
 
-
-
-
-
-
-
-
+(define (ERROR rowList)
+  (if (null? rowList)
+      #f
+      (if (< (car rowList) 0)
+          #t
+          (ERROR (cdr rowList))
+       )
+  
+  )
+)
 
 
 (define (CREATE-ROW row col initial)
@@ -406,122 +317,122 @@
   )
 )
 
-(define (SOLUTION rowList colList treeList gridList returnList)
-
-  ; SOLUTION LOOP
-  ; (if (length treeList) 0)
-      ;returnList
-      ;CALL SOLUTION AGAIN WTIH NEW LISTS
-
-     
-  (define rowZeroList (ZERO-INDEX rowList))
-  (define colZeroList (ZERO-INDEX colList))
-
-
-  (define filterGrid (FILTER-GRID-ZEROS rowZeroList colZeroList gridList treeList))
-
-; CHANGE 0 values as - 1 at rowList and oloumnList
-
-  (define filteredRowList (DECREMENT-ELEMENTS-OF-LIST rowList rowZeroList 1))
-  (define filteredColList (DECREMENT-ELEMENTS-OF-LIST colList colZeroList 1))
-  ;(display filteredRowList)
-  ;(display filteredColList)
-
-
-
-  ;filterGrid
-  (define impossibleGrid (FILTER-GRID-IMPOSSIBLE-POINTS filterGrid treeList))
-  ;(display "\n")
-  ;(display treeList)
-  ;(display "\n")
-
-  ; row sayısı ve col sayısı tam eşleşiyorsa doldur oraları ;;??????
-
-  (define rowEquality (RETURN-POINT-IF-ROW-MATCH filteredRowList impossibleGrid 1))
+(define (FIND-PROPER-PLACE treeNeighbors gridList)
+  (if (null? treeNeighbors)
+      #f
+      (if (LISTMEMBEROFLIST gridList (car treeNeighbors))
+          (car treeNeighbors)
+          (FIND-PROPER-PLACE (cdr treeNeighbors) gridList)
+       )
+   )
   
-
-  ; There is a row equality or colomn equality 
-
-  (define positionsForTents1 (if (not (null? rowEquality)) (FIND-TENTS-AND-TREE-POINTS-WITH-ROW-INDEX treeList impossibleGrid rowEquality) '()))
-
-  ; IF there is row equality remove tree from treeList and put tents in tentList.
-  (define newGridList1 (if (not (null? positionsForTents1)) (REMOVE-POINTS-IF-HAS-EQUALITY positionsForTents1 impossibleGrid) impossibleGrid))
-  (define newTreeList1 (if (not (null? positionsForTents1)) (REMOVE-TREES-IF-HAS-EQUALITY positionsForTents1 treeList) treeList))
-
-  ;IF there is row equality row position number will be -1 and col positions will be decremented.
-
-  (define rowList1 (if (not (null? positionsForTents1)) (REPLACE-NTH filteredRowList rowEquality -1) filteredRowList))
-  (define colList1 (if (not (null? positionsForTents1)) (DECREMENT-ELEMENTS-OF-LIST filteredColList (POSITION-FOR-COL-TENTS positionsForTents1) 1) filteredColList))
-
-  (define tent1 (if (not (null? positionsForTents1)) (ADD-TENTS-TO-LIST positionsForTents1 returnList) returnList))
-
-  ;IF there is col equality col position number will be -1 and row positions will be decremented.
-
-  (define colEquality (RETURN-POINT-IF-COL-MATCH colList1 newGridList1 1))
-
-  (define positionsForTents2 (if (not (null? colEquality)) (FIND-TENTS-AND-TREE-POINTS-WITH-COL-INDEX newTreeList1 newGridList1 colEquality) '()))
-
-  ;IF there is row equality remove tree from treeList and put tents in tentList.
-  (define newGridList2 (if (not (null? positionsForTents2)) (REMOVE-POINTS-IF-HAS-EQUALITY positionsForTents2 newGridList1) newGridList1))
-  (define newTreeList2 (if (not (null? positionsForTents2)) (REMOVE-TREES-IF-HAS-EQUALITY positionsForTents2 newTreeList1) newTreeList1))
-
-  ; new row and column list
-  (define colList2 (if (not (null? positionsForTents2)) (REPLACE-NTH colList1 colEquality -1) colList1))
-  (define rowList2 (if (not (null? positionsForTents2)) (DECREMENT-ELEMENTS-OF-LIST rowList1 (POSITION-FOR-ROW-TENTS positionsForTents2) 1) rowList1))
-
-  ; put tents to tentlist
-
-  (define tent2 (if (not (null? positionsForTents2)) (ADD-TENTS-TO-LIST positionsForTents2 tent1) tent1))
-
-
-
-  (define oneOptionForTree (RETURN-POINT-IF-ANY-TREE-HAS-ONE-POSSIBILITY newTreeList2 newGridList2))
-
-  
-  
-  (define newGridList3 (if (not (null? oneOptionForTree)) (REMOVE-POINTS (cons (car oneOptionForTree) (ALL-NEIGHBOR (car oneOptionForTree))) newGridList2) newGridList2))
-  (define newTreeList3 (if (not (null? oneOptionForTree)) (REMOVE-POINTS (cons (cadr oneOptionForTree) '()) newTreeList2) newTreeList2))
-    
-  (define rowList3 (if (not (null? oneOptionForTree)) (DECREMENT-ELEMENTS-OF-LIST rowList2 (cons (car (car oneOptionForTree)) '()) 1) rowList2))
-  (define colList3 (if (not (null? oneOptionForTree)) (DECREMENT-ELEMENTS-OF-LIST colList2 (cons (cadr (car oneOptionForTree)) '()) 1) colList2))
-  (define tent3   (if (not (null? oneOptionForTree)) (cons (car oneOptionForTree) tent2) tent2))
-
-
-  ;(display newTreeList)
-  ;(display newGridList)
-  ;(display "\n")
-  ;(display newTreeList)
-  ;(display "\n")
-  ;(display newRowList)
-  ;(display "\n")
-  ;(display newColList)
-
-  ;; NO SOLUTION PROBLEM??????????????????????
-  (if (eq? (length newTreeList3) 0)
-    tent3
-    (SOLUTION rowList3 colList3 newTreeList3 newGridList3 tent3)
-  )
-
-
 )
 
+
+(define (POINT-ONLY rowList colList treeNeighbor gridList)
+  (define isMember (LISTMEMBEROFLIST gridList treeNeighbor))
+  (define newGrid (if isMember (REMOVE-POINTS (cons treeNeighbor (ALL-NEIGHBOR treeNeighbor)) gridList) gridList))
+  (define newRowList (if isMember (DECREMENT-ELEMENT-OF-LIST rowList (car treeNeighbor)) rowList))
+  (define newColList (if isMember (DECREMENT-ELEMENT-OF-LIST colList (cadr treeNeighbor)) colList))
+
+
+
+  (define zeroRowGrid (if (eq? (FIND-VALUE newRowList (car treeNeighbor)) 0) #t #f))
+
+  (define newRowGrid (if (and isMember zeroRowGrid) (FILTER-ZERO-ROW (car treeNeighbor) newGrid) newGrid))
+
+  (define zeroColGrid (if (eq? (FIND-VALUE newColList (cadr treeNeighbor)) 0) #t #f))
+
+  (define newColGrid (if (and isMember zeroColGrid) (FILTER-ZERO-COL (cadr treeNeighbor) newRowGrid) newRowGrid))
+
+
+  
+  ;impossible grid varsa çıkar bak hızlanacak mı ?
+
+
+
+  
+
+
+
+  (if isMember
+      (cons treeNeighbor (cons newRowList (cons newColList (cons newColGrid '()))))
+      (cons #f (cons newRowList (cons newColList (cons newColGrid '()))))
+  )
+)
+
+(define (iterateTreeNeighbors rowList colList treeNeighbors treeList gridList)
+
+  (define returnList (if (null? treeNeighbors) #f (POINT-ONLY rowList colList (car treeNeighbors) gridList)))
+  (define first (if (eq? returnList #f) #f (car returnList)))
+  (define second (if (eq? returnList #f ) #f (cadr returnList)))
+  (define third (if (eq? returnList #f) #f (caddr returnList)))
+  (define fourth (if (eq? returnList #f) #f (cadddr returnList)))
+  
+  
+  (if (and (null? (cdr treeList)) (ISMEMBEROFLIST (NEIGHBOR-LIST (car treeList)) gridList))
+      (cons (FIND-PROPER-PLACE (NEIGHBOR-LIST (car treeList)) gridList) '())
+      (if (null? treeNeighbors)
+          #f
+          (if (eq? first #f )
+              (iterateTreeNeighbors rowList colList (cdr treeNeighbors) treeList gridList)
+              (if (or (ERROR second) (ERROR third))
+                  (iterateTreeNeighbors rowList colList (cdr treeNeighbors) treeList gridList)
+                  (if (eq? (iterateTreeNeighbors second third (POSSIBLE-NEIGHBOR (NEIGHBOR-LIST(car (cdr treeList))) fourth) (cdr treeList) fourth) #f)
+                    (iterateTreeNeighbors rowList colList (cdr treeNeighbors) treeList gridList)
+                    (cons first (iterateTreeNeighbors second third (POSSIBLE-NEIGHBOR (NEIGHBOR-LIST(car (cdr treeList))) fourth) (cdr treeList) fourth))
+                  )
+
+  
+              )
+          )
+  
+      )
+  )
+  
+)
+
+
+
+
+
 (define (TENTS-SOLUTION list)
+  (define start (current-milliseconds))
   (define rowList (car list))
   (define colList (cadr list))
   (define treeList (caddr list))
   
   (define gridList (FULL-GRID (length rowList) (length colList) 1))
-  (SOLUTION rowList colList treeList gridList '())
+
+  (define rowZeroList (ZERO-INDEX rowList))
+
+  (define colZeroList (ZERO-INDEX colList))
+
+
+  (define filterGrid (FILTER-GRID-ZEROS rowZeroList colZeroList gridList treeList))
+
+
+  (define impossibleGrid (FILTER-GRID-IMPOSSIBLE-POINTS filterGrid treeList))
+
+
+
+
+  (display (iterateTreeNeighbors rowList colList (POSSIBLE-NEIGHBOR (NEIGHBOR-LIST(car treeList)) impossibleGrid) treeList impossibleGrid))
+  (display "\n")
+  (display (- (current-milliseconds) start))
 )
 
-
-
-;(TENTS-SOLUTION '( (2 1 3 1 3 1 1 0) (1 2 1 3 0 2 1 2) ( (1 3) (1 6) (2 4) (2 8) (3 2) (3 5) (4 3) (4 6) (5 7) (6 4) (7 1) (8 3) ) ) )
-
-
-
-
-
-
-
-
+;(TENTS-SOLUTION '((2 1 2 1 2 2 2 0)(1 2 1 1 2 1 3 1)((1 3)(1 6)(2 3)(2 7)(3 6)(4 8)(5 1)(5 2)(5 7)(6 2)(7 8)(8 5))))
+;(TENTS-SOLUTION '((2 1 3 1 3 1 1 0) (2 2 1 1 1 2 1 2) ((1 3) (1 6) (2 4) (2 8) (3 2) (3 4) (3 6) (4 8) (5 3) (5 5) (6 7) (8 1)) )
+;(TENTS-SOLUTION '((1 2 1 3 2 2 2 2 1) (3 1 3 0 3 1 1 2 2) ((1 5) (1 9) (2 1) (3 3) (3 5) (4 8) (5 1) (5 8) (6 2) (6 4) (6 7) (7 1) (7 8) (8 2) (8 6) (9 6)) )
+;(TENTS-SOLUTION '((1 2 1 3 2 2 2 2 1) (3 1 3 0 3 1 1 2 2) ((1 5) (1 9) (2 1) (3 3) (3 5) (4 8) (5 1) (5 8) (6 2) (6 4) (6 7) (7 1) (7 8) (8 2) (8 6) (9 6)) ))
+;(TENTS-SOLUTION '((2 2 2 2 2 3 2 2 2 1) (3 2 2 1 3 0 3 2 1 3) ((1 1) (2 1) (2 6) (2 7) (3 9) (3 10) (4 5) (4 9) (5 3) (5 7) (5 10) (6 4) (7 1) (7 6) (7 8) (8 3) (8 8) (9 6) (10 2) (10 4) ))
+;(TENTS-SOLUTION '((2 3 2 2 2 2 2 3 2 0) (3 2 1 2 2 2 2 1 1 4) ((1 3) (2 1) (2 4) (2 6) (2 10) (4 1) (4 5) (4 10) (5 3) (5 4) (6 4) (6 8) (6 9) (7 3) (8 3) (8 7) (8 9) (8 10) (10 1) (10 10) )))
+;(TENTS-SOLUTION'((1 4 0 3 1 3 2 3 2 1)(3 1 2 2 1 3 1 3 1 3)((1 1)(1 6)(1 10)(2 4)(2 8)(3 9)(4 2)(4 5)(5 7)(5 10)(6 1)(6 5)(6 9)(7 3)(7 6)(7 10)(8 3)(9 2)(9 8)(10 4))))
+;(TENTS-SOLUTION'((2 2 2 2 2 2 2 2 2)(1 3 0 2 3 1 3 1 2 2)((1 6)(2 3)(2 5)(2 10)(3 2)(3 7)(3 9)(4 5)(4 8)(5 2)(5 10)(5 7)(7 3)(7 6)(8 9)(9 1)(9 5)(9 9))))
+;(TENTS-SOLUTION '((2 2 2 2 3 2 3 2 2 0) (3 1 3 1 2 2 2 2 1 3) ((1 7) (2 5) (2 10) (3 2) (3 3) (3 6) (4 2) (4 9) (4 10) (5 4)(6 2)(6 7)(6 8)(6 10)(7 1)(7 9)( 8 3)(8 6)(9 2) (10 7))))
+;(TENTS-SOLUTION '( (1 3 0 3 1 3 2 3 2 2) (2 3 2 2 1 2 2 2 2 2) ( (1 2) (2 6) (2 7) (2 10) (3 2) (3 4) (4 9) (5 6) (5 7) (6 2) (6 8) (6 10) (7 1) (7 2) (7 4)(7 6)(9 3) (9 9) (10 2) (10 8))))
+;(TENTS-SOLUTION '((4 3 3 4 2 2 3 3 4 4 3 4 3 3 0) (4 3 1 5 2 5 2 3 3 4 1 4 2 2 4) ((1 6) (1 9) (2 1) (2 8) (2 10) (2 14) (2 15) (3 2) (3 4) (3 6) (3 7) (4 5) (4 13) (4 14) (5 1) (6 6) (6 9) (7 7) (8 1) (8 5) (8 7) (8 9) (8 12) (8 15) (9 3) (9 8) (9 14) (10 2) (10 6) (10 11) (10 12) (10 15) (11 4) (11 5) (11 6) (11 8) (11 11) (11 15) (12 1) (12 10) (13 4) (13 6) (13 11) (13 15) (15 1))))
+;(TENTS-SOLUTION '((2 2 1 3 1 3 2 2 3 1) (4 1 1 3 1 2 2 1 3 2) ((1 2) (1 8) (2 5) (2 7) (3 8) (4 1) (4 3) (4 8) (5 3) (5 8) (6 6) (6 10) (7 1) (7 4) (7 8) (9 1) (9 7) (9 9) (10 2) (10 10))))
+;(TENTS-SOLUTION '((2 2 1 3 2 3 1 4 1 1) (2 3 2 2 2 2 2 1 2 2) ((1 1) (1 5) (1 6) (3 3) (3 5) (3 9) (4 6) (5 7) (5 10) (6 1) (6 3) (6 4) (7 3) (7 6) (7 9) (7 10) (8 1) (8 7) (9 4) (10 4))))
+;(TENTS-SOLUTION '((2 3 2 2 2 2 2 3 2 0) (3 2 1 2 2 2 2 1 1 4) ((1 3) (2 1) (2 4) (2 6) (2 10) (4 1) (4 5) (4 10) (5 3) (5 4) (6 4) (6 8) (6 9) (7 3) (8 3) (8 7) (8 9) (8 10) (10 1) (10 10))))
